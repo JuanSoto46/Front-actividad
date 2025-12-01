@@ -4,8 +4,10 @@ import Interaction from "./interaction/Interaction";
 const Home: React.FC = () => {
   return (
     <>
-      {/* <Chat /> */}
+    <div className="flex flex-row justify-center items-center bg-gray-200 dark:bg-gray-900 w-full h-full">
       <Interaction/>
+      <Chat  />
+    </div>
     </>
   );
 };

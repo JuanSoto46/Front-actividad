@@ -48,9 +48,9 @@ const Chat: React.FC = () => {
 
   return (
     <div className="container-page">
-      <div className="flex flex-col gap-4 w-full">
+      <div className="flex flex-col gap-4 w-full h-[calc(100vh-100px)]">
         <h1>EISC Meet</h1>
-        <div className="w-full h-64 rounded border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-3 text-sm overflow-y-auto flex flex-col gap-3">
+        <div className="w-full h-[calc(100vh-200px)] rounded border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-3 text-sm overflow-y-auto flex flex-col gap-3">
           {messages.length === 0 ? (
             <p className="text-center text-gray-400">
               Aquí verás los mensajes del chat...
