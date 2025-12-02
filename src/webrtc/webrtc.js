@@ -37,12 +37,20 @@ export const initWebRTC = async () => {
  */
 async function getMedia() {
   try {
-    return await navigator.mediaDevices.getUserMedia({ audio: true, video: true }); 
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true }); 
+
+    // Disable video tracks by default
+    stream.getVideoTracks().forEach(track => {
+      track.enabled = false;
+    });
+
+    return stream;
   } catch (err) {
     console.error("Failed to get user media:", err);
     throw err;
   }
 }
+
 
 /**
  * Initializes the socket connection and sets up event listeners.
