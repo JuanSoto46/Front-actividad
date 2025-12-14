@@ -10,6 +10,7 @@ const iceServerCredential = import.meta.env.VITE_ICE_SERVER_CREDENTIAL;
 let socket = null;
 let peers = {};
 let localMediaStream = null;
+let screenStream = null;
 
 /**
  * Initializes the WebRTC connection if supported.
@@ -275,7 +276,98 @@ export function getLocalStream() {
   return localMediaStream;
 }
 
+/**
+ * Starts screen sharing.
+ * @async
+ * @function startScreenShare
+ * @returns {Promise<MediaStream>} The screen share stream.
+ */
+export async function startScreenShare() {
+  try {
+    screenStream = await navigator.mediaDevices.getDisplayMedia({
+      video: {
+        cursor: "always",
+        displaySurface: "monitor",
+        width: { ideal: 1920 },
+        height: { ideal: 1080 }
+      },
+      audio: false
+    });
 
+    console.log("Screen share stream created:", screenStream);
+    console.log("Screen tracks:", screenStream.getTracks());
+
+    // Replace video track in all peer connections
+    Object.keys(peers).forEach((peerId) => {
+      const peer = peers[peerId];
+      if (peer.peerConnection && peer.peerConnection._pc) {
+        const sender = peer.peerConnection._pc
+          .getSenders()
+          .find((s) => s.track && s.track.kind === "video");
+        
+        if (sender && screenStream.getVideoTracks()[0]) {
+          sender.replaceTrack(screenStream.getVideoTracks()[0])
+            .then(() => console.log(`Screen track replaced for peer: ${peerId}`))
+            .catch(err => console.error(`Error replacing track for peer ${peerId}:`, err));
+        }
+      }
+    });
+
+    // Handle when user stops sharing via browser UI
+    screenStream.getVideoTracks()[0].onended = () => {
+      console.log("Screen share ended by user");
+      stopScreenShare();
+    };
+
+    return screenStream;
+  } catch (error) {
+    console.error("Error starting screen share:", error);
+    throw error;
+  }
+}
+
+/**
+ * Stops screen sharing and returns to camera.
+ * @function stopScreenShare
+ */
+export function stopScreenShare() {
+  console.log("Stopping screen share");
+  
+  if (screenStream) {
+    screenStream.getTracks().forEach((track) => {
+      track.stop();
+      console.log("Screen track stopped");
+    });
+    screenStream = null;
+  }
+
+  // Return to camera video track
+  if (localMediaStream && localMediaStream.getVideoTracks()[0]) {
+    Object.keys(peers).forEach((peerId) => {
+      const peer = peers[peerId];
+      if (peer.peerConnection && peer.peerConnection._pc) {
+        const sender = peer.peerConnection._pc
+          .getSenders()
+          .find((s) => s.track && s.track.kind === "video");
+        
+        if (sender) {
+          sender.replaceTrack(localMediaStream.getVideoTracks()[0])
+            .then(() => console.log(`Camera track restored for peer: ${peerId}`))
+            .catch(err => console.error(`Error restoring track for peer ${peerId}:`, err));
+        }
+      }
+    });
+  }
+}
+
+/**
+ * Gets the screen share stream.
+ * @function getScreenStream
+ * @returns {MediaStream|null} The screen share stream.
+ */
+export function getScreenStream() {
+  return screenStream;
+}
 
 /**
  * Creates media elements for a client.
